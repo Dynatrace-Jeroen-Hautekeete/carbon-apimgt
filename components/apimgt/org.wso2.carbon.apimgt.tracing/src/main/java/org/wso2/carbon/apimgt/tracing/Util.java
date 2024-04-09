@@ -65,6 +65,36 @@ public class Util {
     }
 
     /**
+     * Start the tracing span with kind
+     *
+     * @param spanName
+     * @param parentSpan
+     * @param tracer     io.opentracing tracer
+     * @return a TracingSpan object
+     */
+    public static TracingSpan startSpanKind(String spanName, TracingSpan parentSpan, TracingTracer tracer, String kind) {
+
+        if (parentSpan == null) {
+            Span span = tracer.getTracingTracer().buildSpan(spanName).withTag("span.kind", kind).start();
+            return new TracingSpan(span);
+        } else {
+            Object sp = parentSpan.getSpan();
+            Span childSpan;
+            if (sp != null) {
+                if (sp instanceof Span) {
+                    childSpan = tracer.getTracingTracer().buildSpan(spanName).withTag("span.kind", kind).asChildOf((Span) sp).start();
+                } else {
+                    childSpan = tracer.getTracingTracer().buildSpan(spanName).withTag("span.kind", kind).asChildOf((SpanContext) sp).start();
+                }
+            } else {
+                childSpan = tracer.getTracingTracer().buildSpan(spanName).withTag("span.kind", kind).start();
+            }
+            return new TracingSpan(childSpan);
+        }
+    }
+    
+    
+    /**
      * Set tag to the span
      *
      * @param span
