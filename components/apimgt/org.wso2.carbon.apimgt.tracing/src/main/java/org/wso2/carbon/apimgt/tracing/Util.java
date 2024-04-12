@@ -79,7 +79,7 @@ public class Util {
         // starting a span without a span.kind at start will be considered as span.kind==internal by some tracers
 
         SpanBuilder sb = tracer.getTracingTracer().buildSpan(spanName);
-    	
+
         if (parentSpan != null) {
             Object sp = parentSpan.getSpan();
             if (sp != null) {
@@ -94,9 +94,9 @@ public class Util {
         if ((tags != null) && (!tags.isEmpty())) {
             for (String tag:tags.keySet()) {
                 sb = sb.withTag(tag, tags.get(tag));
-            }        	
-        } 
-   
+            }
+        }
+        
         return new TracingSpan(sb.start());
     }
     
