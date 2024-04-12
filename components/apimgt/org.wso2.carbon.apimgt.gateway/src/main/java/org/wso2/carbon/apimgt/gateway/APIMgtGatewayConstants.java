@@ -121,6 +121,8 @@ public class APIMgtGatewayConstants {
     public static final String SPAN_REQUEST_PATH = "span.request.path";
     public static final String SPAN_REQUEST_METHOD = "span.request.method";
     public static final String SERVER = "server";
+    public static final String SPAN_KIND_SERVER = "server";
+    public static final String SPAN_KIND_CLIENT = "client";
     public static final String ERROR = "error";
     public static final String KEY_SPAN_ERROR = "API Authentication Failure";
     public static final String RESPONSE_MEDIATION_ERROR = "Error in Response Mediation";

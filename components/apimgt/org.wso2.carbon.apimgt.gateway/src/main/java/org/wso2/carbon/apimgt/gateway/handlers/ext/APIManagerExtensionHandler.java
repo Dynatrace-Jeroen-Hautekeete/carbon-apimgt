@@ -91,10 +91,11 @@ public class APIManagerExtensionHandler extends AbstractHandler {
         long executionStartTime = System.nanoTime();
         TracingSpan requestMediationSpan = null;
         if (Util.tracingEnabled()) {
-            TracingSpan responseLatencySpan =
-                    (TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESOURCE_SPAN);
+            TracingSpan parentSpan = (TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESOURCE_SPAN);
+            if (parentSpan==null)
+            	parentSpan=(TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESPONSE_LATENCY);
             TracingTracer tracer = Util.getGlobalTracer();
-            requestMediationSpan = Util.startSpan(APIMgtGatewayConstants.REQUEST_MEDIATION, responseLatencySpan, tracer);
+            requestMediationSpan = Util.startSpan(APIMgtGatewayConstants.REQUEST_MEDIATION, parentSpan, tracer);
         }
         try {
             boolean isMediated = mediate(messageContext, DIRECTION_IN);
@@ -132,11 +133,13 @@ public class APIManagerExtensionHandler extends AbstractHandler {
         long executionStartTime = System.nanoTime();
         TracingSpan responseMediationSpan = null;
         if (Util.tracingEnabled()) {
-            TracingSpan responseLatencySpan =
-                    (TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESOURCE_SPAN);
+            TracingSpan parentSpan = (TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESOURCE_SPAN);
+            if (parentSpan==null)
+            	parentSpan=(TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESPONSE_LATENCY);
+            
             TracingTracer tracer = Util.getGlobalTracer();
             responseMediationSpan =
-                    Util.startSpan(APIMgtGatewayConstants.RESPONSE_MEDIATION, responseLatencySpan, tracer);
+                    Util.startSpan(APIMgtGatewayConstants.RESPONSE_MEDIATION, parentSpan, tracer);
         }
         try {
             return mediate(messageContext, DIRECTION_OUT);

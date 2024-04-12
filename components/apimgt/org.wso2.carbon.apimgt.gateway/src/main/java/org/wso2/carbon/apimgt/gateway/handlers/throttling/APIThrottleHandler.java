@@ -166,10 +166,12 @@ public class APIThrottleHandler extends AbstractHandler {
         long executionStartTime = System.nanoTime();
         TracingSpan throttlingLatencySpan = null;
         if (Util.tracingEnabled()) {
-            TracingSpan responseLatencySpan =
-                    (TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESOURCE_SPAN);
+            TracingSpan parentSpan = (TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESOURCE_SPAN);
+            if (parentSpan==null)
+            	parentSpan=(TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESPONSE_LATENCY);
+            
             TracingTracer tracer = Util.getGlobalTracer();
-            throttlingLatencySpan = Util.startSpan(APIMgtGatewayConstants.THROTTLE_LATENCY, responseLatencySpan, tracer);
+            throttlingLatencySpan = Util.startSpan(APIMgtGatewayConstants.THROTTLE_LATENCY, parentSpan, tracer);
         }
         try {
             return doThrottle(messageContext);

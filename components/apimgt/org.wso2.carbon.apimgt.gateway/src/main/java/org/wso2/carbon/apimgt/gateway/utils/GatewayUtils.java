@@ -1145,6 +1145,15 @@ public class GatewayUtils {
         }
     }
 
+    public static void addEndpointRelatedInformation(Map<String,String> tags,
+            org.apache.synapse.MessageContext messageContext) {
+
+    	Object endpoint = messageContext.getProperty(APIMgtGatewayConstants.SYNAPSE_ENDPOINT_ADDRESS);
+    	if (endpoint != null) {
+    		tags.put(APIMgtGatewayConstants.SPAN_ENDPOINT, (String) endpoint);
+    	} 
+    }
+
     public static List<String> retrieveDeployedSequences(String apiName, String version, String tenantDomain)
             throws APIManagementException {
 

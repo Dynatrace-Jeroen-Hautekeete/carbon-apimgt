@@ -21,6 +21,7 @@ package org.wso2.carbon.apimgt.tracing;
 import com.google.common.collect.ImmutableMap;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
+import io.opentracing.Tracer.SpanBuilder;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.propagation.TextMapInjectAdapter;
@@ -44,6 +45,7 @@ public class Util {
      * @return a TracingSpan object
      */
     public static TracingSpan startSpan(String spanName, TracingSpan parentSpan, TracingTracer tracer) {
+    	// starting a span without a span.kind at start will be considered as span.kind==internal by some tracers
 
         if (parentSpan == null) {
             Span span = tracer.getTracingTracer().buildSpan(spanName).start();
@@ -63,6 +65,40 @@ public class Util {
             return new TracingSpan(childSpan);
         }
     }
+    
+    /**
+     * Start the tracing span, allow to set as many tags before actual start since some tracers depend on this
+     *
+     * @param spanName
+     * @param parentSpan
+     * @param tracer     io.opentracing tracer
+     * @return a TracingSpan object
+     */
+    public static TracingSpan startSpan(String spanName, TracingSpan parentSpan, TracingTracer tracer, Map<String,String> tags) {
+    	// starting a span without a span.kind at start will be considered as span.kind==internal by some tracers
+
+    	SpanBuilder sb=tracer.getTracingTracer().buildSpan(spanName);
+    	
+        if (parentSpan != null) {
+            Object sp = parentSpan.getSpan();
+            if (sp != null) {
+                if (sp instanceof Span) {
+                    sb = sb.asChildOf((Span) sp);
+                } else {
+                    sb = sb.asChildOf((SpanContext) sp);
+                }
+            } 
+        }
+        
+        if ((tags!=null)&&(!tags.isEmpty())) {
+        	for (String tag:tags.keySet()) {
+        		sb=sb.withTag(tag, tags.get(tag));
+        	}        	
+        } 
+   
+        return new TracingSpan(sb.start());
+    }
+    
 
     /**
      * Set tag to the span

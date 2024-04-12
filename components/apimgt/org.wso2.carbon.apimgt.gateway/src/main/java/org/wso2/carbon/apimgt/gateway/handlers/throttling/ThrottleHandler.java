@@ -539,10 +539,12 @@ public class ThrottleHandler extends AbstractHandler implements ManagedLifecycle
         Timer.Context context3 = timer3.start();
         TracingSpan throttleLatencySpan = null;
         if (Util.tracingEnabled()) {
-            TracingSpan responseLatencySpan =
-                    (TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESOURCE_SPAN);
+            TracingSpan parentSpan = (TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESOURCE_SPAN);
+            if (parentSpan==null)
+            	parentSpan=(TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESPONSE_LATENCY);
+                        
             TracingTracer tracer = Util.getGlobalTracer();
-            throttleLatencySpan = Util.startSpan(APIMgtGatewayConstants.THROTTLE_LATENCY, responseLatencySpan, tracer);
+            throttleLatencySpan = Util.startSpan(APIMgtGatewayConstants.THROTTLE_LATENCY, parentSpan, tracer);
         }
         long executionStartTime = System.currentTimeMillis();
         if (!ExtensionListenerUtil.preProcessRequest(messageContext, type)) {

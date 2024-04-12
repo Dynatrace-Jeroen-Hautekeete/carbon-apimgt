@@ -45,9 +45,13 @@ public class APIMgtLatencySynapseHandler extends AbstractSynapseHandler {
             Map headersMap =
                     (Map) axis2MessageContext.getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
             TracingSpan spanContext = Util.extract(tracer, headersMap);
+            
+            HashMap<String,String> tags= new HashMap<String,String>();
+            tags.put(APIMgtGatewayConstants.SPAN_KIND, APIMgtGatewayConstants.SPAN_KIND_SERVER);
+            
             TracingSpan responseLatencySpan =
-                    Util.startSpan(APIMgtGatewayConstants.RESPONSE_LATENCY, spanContext, tracer);
-            Util.setTag(responseLatencySpan, APIMgtGatewayConstants.SPAN_KIND, APIMgtGatewayConstants.SERVER);
+                    Util.startSpan(APIMgtGatewayConstants.RESPONSE_LATENCY, spanContext, tracer,tags);
+            // Util.setTag(responseLatencySpan, APIMgtGatewayConstants.SPAN_KIND, APIMgtGatewayConstants.SERVER);
             GatewayUtils.setRequestRelatedTags(responseLatencySpan, messageContext);
             messageContext.setProperty(APIMgtGatewayConstants.RESPONSE_LATENCY, responseLatencySpan);
         }
@@ -61,8 +65,17 @@ public class APIMgtLatencySynapseHandler extends AbstractSynapseHandler {
         Map<String, String> tracerSpecificCarrier = new HashMap<>();
         if (Util.tracingEnabled()) {
             TracingSpan parentSpan = (TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESOURCE_SPAN);
+            if (parentSpan==null) // no handlers ? attach directly to incoming request 
+                parentSpan = (TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESPONSE_LATENCY);
+            
+            HashMap<String,String> tags= new HashMap<String,String>();
+            tags.put(APIMgtGatewayConstants.SPAN_KIND, APIMgtGatewayConstants.SPAN_KIND_CLIENT);
+            
+            // endpoint is already known on request outflow ?
+            GatewayUtils.addEndpointRelatedInformation(tags, messageContext);
+            
             TracingSpan backendLatencySpan =
-                    Util.startSpan(APIMgtGatewayConstants.BACKEND_LATENCY_SPAN, parentSpan, tracer);
+                    Util.startSpan(APIMgtGatewayConstants.BACKEND_LATENCY_SPAN, parentSpan, tracer, tags);
             messageContext.setProperty(APIMgtGatewayConstants.BACKEND_LATENCY_SPAN, backendLatencySpan);
             Util.inject(backendLatencySpan, tracer, tracerSpecificCarrier);
             if (org.apache.axis2.context.MessageContext.getCurrentMessageContext() != null) {
@@ -81,8 +94,11 @@ public class APIMgtLatencySynapseHandler extends AbstractSynapseHandler {
         if (Util.tracingEnabled() && messageContext.getProperty(APIMgtGatewayConstants.BACKEND_LATENCY_SPAN) != null) {
             TracingSpan backendLatencySpan =
                     (TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.BACKEND_LATENCY_SPAN);
-            GatewayUtils.setEndpointRelatedInformation(backendLatencySpan, messageContext);
+            // endpoint is already known on request outflow ?
+            // GatewayUtils.setEndpointRelatedInformation(backendLatencySpan, messageContext);
             Util.finishSpan(backendLatencySpan);
+            // clear the reference to avoid confusion
+            messageContext.setProperty(APIMgtGatewayConstants.BACKEND_LATENCY_SPAN, null);
         }
         return true;
     }
@@ -94,6 +110,8 @@ public class APIMgtLatencySynapseHandler extends AbstractSynapseHandler {
             if (resourceSpanObject != null){
                 GatewayUtils.setAPIResource((TracingSpan) resourceSpanObject, messageContext);
                 Util.finishSpan((TracingSpan) resourceSpanObject);
+                // clear the reference to avoid confusion
+                messageContext.setProperty(APIMgtGatewayConstants.RESOURCE_SPAN,null);
             }
             TracingSpan responseLatencySpan =
                     (TracingSpan) messageContext.getProperty(APIMgtGatewayConstants.RESPONSE_LATENCY);
@@ -103,6 +121,7 @@ public class APIMgtLatencySynapseHandler extends AbstractSynapseHandler {
                 Util.updateOperation(responseLatencySpan, api.getApiName().concat("--").concat(api.getApiVersion()).concat("--").concat(GatewayUtils.getTenantDomain()));
             }
             Util.finishSpan(responseLatencySpan);
+            messageContext.setProperty(APIMgtGatewayConstants.RESPONSE_LATENCY,null);
         }
         return true;
     }
