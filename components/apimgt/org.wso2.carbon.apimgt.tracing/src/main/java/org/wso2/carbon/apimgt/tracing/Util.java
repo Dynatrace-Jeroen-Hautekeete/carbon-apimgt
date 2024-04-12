@@ -92,8 +92,8 @@ public class Util {
         }
         
         if ((tags != null) && (!tags.isEmpty())) {
-            for (String tag:tags.keySet()) {
-                sb = sb.withTag(tag, tags.get(tag));
+            for (Map.Entry<String, String> entry:tags.entrySet()) {
+                sb = sb.withTag(entry.getKey(), entry.getValue());
             }
         }
         
