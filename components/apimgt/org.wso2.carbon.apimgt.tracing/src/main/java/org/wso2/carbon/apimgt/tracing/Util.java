@@ -75,7 +75,7 @@ public class Util {
      * @return a TracingSpan object
      */
     public static TracingSpan startSpan(String spanName, TracingSpan parentSpan, TracingTracer tracer,
-    		Map<String, String> tags) {
+            Map<String, String> tags) {
         // starting a span without a span.kind at start will be considered as span.kind==internal by some tracers
 
         SpanBuilder sb = tracer.getTracingTracer().buildSpan(spanName);
